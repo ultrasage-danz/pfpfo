@@ -168,6 +168,10 @@ poetry install
 
 *(To be determined)*
 
+## CircleCI
+
+[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/XbC7AoPbDq6kv77Q92i6dK/9FPwBXXN1scw4EnPpD9g5m/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/XbC7AoPbDq6kv77Q92i6dK/9FPwBXXN1scw4EnPpD9g5m/tree/main)
+
 ## References
 
 - Markowitz, H. (1952). Portfolio Selection. *The Journal of Finance*, 7(1), 77-91.
