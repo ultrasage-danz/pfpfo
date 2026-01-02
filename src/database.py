@@ -9,9 +9,13 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from dotenv import load_dotenv
 from supabase import Client, create_client
 
 from src.settings import SUPABASE_TABLE_NAME
+
+# Load environment variables from .env file
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 

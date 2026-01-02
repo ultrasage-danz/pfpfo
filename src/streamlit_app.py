@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import date
 from functools import lru_cache
+from io import StringIO
 
 import altair as alt
 import pandas as pd
@@ -95,7 +96,7 @@ def build_price_history(row: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame] | N
 @lru_cache(maxsize=1)
 def compute_prediction_performance(data_json: str) -> pd.DataFrame:
     """Compare past predictions against actual outcomes using successive days."""
-    df = pd.read_json(data_json, orient="records", convert_dates=False)
+    df = pd.read_json(StringIO(data_json), orient="records", convert_dates=False)
     if df.empty:
         return df
 
@@ -195,7 +196,7 @@ def run_dashboard() -> None:
         if pie is None:
             st.info("Weights are zero or missing for this date.")
         else:
-            st.plotly_chart(pie, use_container_width=True)
+            st.plotly_chart(pie, width='stretch')
 
     with table_col:
         summary_table = date_df[["ticker", "predicted_price", "predicted_return"]].copy()
@@ -210,7 +211,7 @@ def run_dashboard() -> None:
         st.dataframe(
             summary_table[["Ticker", "Predicted Price", "Predicted Return (%)"]],
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
             column_config={
                 "Predicted Price": st.column_config.NumberColumn(format="$%.2f"),
                 "Predicted Return (%)": st.column_config.NumberColumn(format="%.2f%%"),
@@ -234,64 +235,67 @@ def run_dashboard() -> None:
         st.metric("Predicted Return", f"{ticker_row['predicted_return']*100:.2f}%")
 
     st.subheader(f"Price Trend · {selected_ticker}")
-    ticker_perf_for_trend = perf_df[perf_df["ticker"] == selected_ticker].copy()
-    if ticker_perf_for_trend.empty:
+    if perf_df.empty or "ticker" not in perf_df.columns:
         st.info("No historical prediction data available for this ticker yet.")
     else:
-        # Determine dynamic y-axis range: -20% below min and +20% above max
-        min_price = float(ticker_perf_for_trend[["actual_price", "predicted_price"]].min().min())
-        max_price = float(ticker_perf_for_trend[["actual_price", "predicted_price"]].max().max())
+        ticker_perf_for_trend = perf_df[perf_df["ticker"] == selected_ticker].copy()
+        if ticker_perf_for_trend.empty:
+            st.info("No historical prediction data available for this ticker yet.")
+        else:
+            # Determine dynamic y-axis range: -20% below min and +20% above max
+            min_price = float(ticker_perf_for_trend[["actual_price", "predicted_price"]].min().min())
+            max_price = float(ticker_perf_for_trend[["actual_price", "predicted_price"]].max().max())
 
-        default_min = min_price * 0.8
-        default_max = max_price * 1.2
+            default_min = min_price * 0.8
+            default_max = max_price * 1.2
 
-        # Allow some extra room in the slider bounds
-        slider_min = float(round(default_min * 0.9, 2))
-        slider_max = float(round(default_max * 1.1, 2))
+            # Allow some extra room in the slider bounds
+            slider_min = float(round(default_min * 0.9, 2))
+            slider_max = float(round(default_max * 1.1, 2))
 
-        y_min, y_max = st.slider(
-            "Price range (y-axis)",
-            min_value=slider_min,
-            max_value=slider_max,
-            value=(float(round(default_min, 2)), float(round(default_max, 2))),
-        )
-
-        long_df_trend = ticker_perf_for_trend.melt(
-            id_vars=["evaluation_date", "prediction_date"],
-            value_vars=["actual_price", "predicted_price"],
-            var_name="series",
-            value_name="price",
-        )
-        line_chart_trend = (
-            alt.Chart(long_df_trend)
-            .mark_line(point=True)
-            .encode(
-                x=alt.X("evaluation_date:T", title="Evaluation Date"),
-                y=alt.Y("price:Q", title="Price (USD)", scale=alt.Scale(domain=[y_min, y_max])),
-                color=alt.Color(
-                    "series:N",
-                    title="Series",
-                    scale=alt.Scale(
-                        domain=["actual_price", "predicted_price"],
-                        range=["#1f77b4", "#ff7f0e"],
-                    ),
-                    legend=alt.Legend(
-                        labelExpr="datum.value == 'actual_price' ? 'Actual' : 'Predicted'"
-                    ),
-                ),
-                tooltip=[
-                    alt.Tooltip("prediction_date:T", title="Prediction Date"),
-                    alt.Tooltip("evaluation_date:T", title="Evaluation Date"),
-                    alt.Tooltip("series:N", title="Series"),
-                    alt.Tooltip("price:Q", title="Price", format=".2f"),
-                ],
+            y_min, y_max = st.slider(
+                "Price range (y-axis)",
+                min_value=slider_min,
+                max_value=slider_max,
+                value=(float(round(default_min, 2)), float(round(default_max, 2))),
             )
-        )
-        st.altair_chart(line_chart_trend, use_container_width=True)
-        st.caption("Lines show historical predicted vs actual next-day prices for this ticker.")
+
+            long_df_trend = ticker_perf_for_trend.melt(
+                id_vars=["evaluation_date", "prediction_date"],
+                value_vars=["actual_price", "predicted_price"],
+                var_name="series",
+                value_name="price",
+            )
+            line_chart_trend = (
+                alt.Chart(long_df_trend)
+                .mark_line(point=True)
+                .encode(
+                    x=alt.X("evaluation_date:T", title="Evaluation Date"),
+                    y=alt.Y("price:Q", title="Price (USD)", scale=alt.Scale(domain=[y_min, y_max])),
+                    color=alt.Color(
+                        "series:N",
+                        title="Series",
+                        scale=alt.Scale(
+                            domain=["actual_price", "predicted_price"],
+                            range=["#1f77b4", "#ff7f0e"],
+                        ),
+                        legend=alt.Legend(
+                            labelExpr="datum.value == 'actual_price' ? 'Actual' : 'Predicted'"
+                        ),
+                    ),
+                    tooltip=[
+                        alt.Tooltip("prediction_date:T", title="Prediction Date"),
+                        alt.Tooltip("evaluation_date:T", title="Evaluation Date"),
+                        alt.Tooltip("series:N", title="Series"),
+                        alt.Tooltip("price:Q", title="Price", format=".2f"),
+                    ],
+                )
+            )
+            st.altair_chart(line_chart_trend, width='stretch')
+            st.caption("Lines show historical predicted vs actual next-day prices for this ticker.")
 
     st.subheader("Prediction Accuracy")
-    if perf_df.empty:
+    if perf_df.empty or "ticker" not in perf_df.columns:
         st.info(
             "Not enough historical runs to evaluate predictions yet. Check back after multiple runs."
         )
@@ -325,7 +329,7 @@ def run_dashboard() -> None:
                     ]
                 ],
                 hide_index=True,
-                use_container_width=True,
+                width='stretch',
                 column_config={
                     "Predicted Price": st.column_config.NumberColumn(format="$%.2f"),
                     "Actual Price": st.column_config.NumberColumn(format="$%.2f"),
