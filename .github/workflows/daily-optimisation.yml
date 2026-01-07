@@ -37,6 +37,16 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction
 
+      - name: Debug SUPABASE secret presence
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          print("SUPABASE_URL set:", bool(os.environ.get("SUPABASE_URL")))
+          print("SUPABASE_KEY set:", bool(os.environ.get("SUPABASE_KEY")))
+          PY
       - name: Run portfolio optimisation and save to Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
