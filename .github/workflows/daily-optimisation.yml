@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
     
     steps:
       - name: Checkout code
@@ -42,5 +39,10 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction
 
-      - name: Run portfolio optimisation and save to Supabase
-        run: poetry run python -m src.main
+      - name: Debug and Run portfolio optimisation
+        run: |
+          export SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          export SUPABASE_KEY="${{ secrets.SUPABASE_KEY }}"
+          echo "URL set: $([ -z "$SUPABASE_URL" ] && echo 'NO' || echo 'YES')"
+          echo "KEY set: $([ -z "$SUPABASE_KEY" ] && echo 'NO' || echo 'YES')"
+          poetry run python -m src.main
