@@ -41,7 +41,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SUPABASE_REAL_URL: ${{ secrets.SUPABASE_REAL_URL }}
         run: |
           python - <<'PY'
           import os
