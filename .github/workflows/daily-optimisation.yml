@@ -9,8 +9,6 @@ on:
 jobs:
   optimise:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     
     steps:
       - name: Checkout code
@@ -39,10 +37,18 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction
 
-      - name: Debug and Run portfolio optimisation
+      - name: Debug SUPABASE secret presence
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          export SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          export SUPABASE_KEY="${{ secrets.SUPABASE_KEY }}"
-          echo "URL set: $([ -z "$SUPABASE_URL" ] && echo 'NO' || echo 'YES')"
-          echo "KEY set: $([ -z "$SUPABASE_KEY" ] && echo 'NO' || echo 'YES')"
-          poetry run python -m src.main
+          python - <<'PY'
+          import os
+          print("SUPABASE_URL set:", os.environ.get("SUPABASE_URL"))
+          print("SUPABASE_KEY set:", bool(os.environ.get("SUPABASE_KEY")))
+          PY
+      - name: Run portfolio optimisation and save to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: poetry run python -m src.main
