@@ -41,10 +41,12 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           python - <<'PY'
           import os
           print("SUPABASE_URL set:", os.environ.get("SUPABASE_URL"))
+          print("SSH_PRIVATE_KEY set:", os.environ.get("SSH_PRIVATE_KEY"))
           print("SUPABASE_KEY set:", bool(os.environ.get("SUPABASE_KEY")))
           PY
       - name: Run portfolio optimisation and save to Supabase
