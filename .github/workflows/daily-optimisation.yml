@@ -51,6 +51,6 @@ jobs:
           PY
       - name: Run portfolio optimisation and save to Supabase
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_REAL_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: poetry run python -m src.main
